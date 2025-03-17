@@ -26,6 +26,7 @@ import (
 	"github.com/kaleido-io/paladin/toolkit/pkg/log"
 	"github.com/kaleido-io/paladin/toolkit/pkg/pldapi"
 	"github.com/kaleido-io/paladin/toolkit/pkg/signer"
+	"github.com/kaleido-io/paladin/toolkit/pkg/signer/keystores"
 	"github.com/kaleido-io/paladin/toolkit/pkg/signerapi"
 	"github.com/kaleido-io/paladin/toolkit/pkg/tktypes"
 )
@@ -52,18 +53,27 @@ func (km *keyManager) newWallet(ctx context.Context, walletConf *pldconf.WalletC
 	}
 
 	signerType := confutil.StringNotEmpty(&walletConf.SignerType, pldconf.WalletDefaults.SignerType)
-	if signerType != pldconf.WalletSignerTypeEmbedded {
-		// Until we support remoting of the signer API over HTTP/WebSockets etc.
+	if signerType == pldconf.WalletSignerTypeEmbedded {
+		w.signingModule, err = signer.NewSigningModule(ctx, (*signerapi.ConfigNoExt)(walletConf.Signer))
+		if err != nil {
+			return nil, i18n.WrapError(ctx, err, msgs.MsgKeyManagerEmbeddedSignerFailInit, w.name)
+		}
+	} else if signerType == pldconf.WalletSignerTypeRemote {
+		w.signingModule, err = signer.NewSigningModule(ctx,
+			walletConf.RemoteSigner,
+			&signerapi.Extensions[*pldconf.RemoteSignerConfig]{
+				KeyStoreFactories: map[string]signerapi.KeyStoreFactory[*pldconf.RemoteSignerConfig]{
+					pldconf.WalletSignerTypeRemote: keystores.NewRemoteStoreFactory(),
+				},
+			})
+		if err != nil {
+			return nil, i18n.WrapError(ctx, err, msgs.MsgKeyManagerRemoteSignerFailInit, w.name)
+		}
+	} else {
 		return nil, i18n.NewError(ctx, msgs.MsgKeyManagerInvalidWalletSignerType, signerType, w.name)
 	}
 
-	w.signingModule, err = signer.NewSigningModule(ctx, (*signerapi.ConfigNoExt)(walletConf.Signer))
-	if err != nil {
-		return nil, i18n.WrapError(ctx, err, msgs.MsgKeyManagerEmbeddedSignerFailInit, w.name)
-	}
-
 	return w, nil
-
 }
 
 func (km *keyManager) selectWallet(ctx context.Context, identifier string) (*wallet, error) {

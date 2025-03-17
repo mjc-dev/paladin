@@ -28,14 +28,16 @@ type KeyManagerManagerConfig struct {
 }
 
 type WalletConfig struct {
-	Name        string        `json:"name"`
-	KeySelector string        `json:"keySelector"`
-	SignerType  string        `json:"signerType"`
-	Signer      *SignerConfig `json:"signer"` // embedded only
+	Name         string              `json:"name"`
+	KeySelector  string              `json:"keySelector"`
+	SignerType   string              `json:"signerType"`
+	Signer       *SignerConfig       `json:"signer"`       // embedded only
+	RemoteSigner *RemoteSignerConfig `json:"remoteSigner"` // remote only
 }
 
 const (
 	WalletSignerTypeEmbedded string = "embedded"
+	WalletSignerTypeRemote   string = "remote"
 )
 
 var WalletDefaults = &WalletConfig{

@@ -42,6 +42,27 @@ type KeyStoreConfig struct {
 	Static            StaticKeyStoreConfig     `json:"static"`
 }
 
+type RemoteSignerConfig struct {
+	RemoteKeyStoreConfig `json:",inline"`
+	KeyDerivation        KeyDerivationConfig `json:"keyDerivation"`
+	KeyStore             KeyStoreConfig      `json:"keyStore"`
+}
+
+type RemoteKeyStoreConfig struct {
+	WSConfig   *WSClientConfig   `json:"wsConfig,omitempty"`
+	HTTPConfig *HTTPClientConfig `json:"httpConfig,omitempty"`
+}
+
+// TODO perhaps this is fixed and not part of settable config (or only a subset is)
+func (rsm RemoteSignerConfig) KeyStoreConfig() *KeyStoreConfig {
+	return &rsm.KeyStore
+}
+
+// TODO perhaps this is fixed and not part of settable config (or only a subset is)
+func (rsm RemoteSignerConfig) KeyDerivationConfig() *KeyDerivationConfig {
+	return &rsm.KeyDerivation
+}
+
 type KeyDerivationType string
 
 const (
