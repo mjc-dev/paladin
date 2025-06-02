@@ -3879,7 +3879,7 @@ states will be created for the remaining amount (if any).</p>
 <li><strong>data</strong> - user/application data to include with the transaction (will be accessible from an "info" state in the state receipt)</li>
 </ul>
 <h2 id="public-abi">Public ABI<a class="headerlink" href="#public-abi" title="Permanent link">&para;</a></h2>
-<p>The public ABI of Noto is implemented in Solidity by <a href="../../solidity/contracts/domains/noto/Noto.sol">Noto.sol</a>,
+<p>The public ABI of Noto is implemented in Solidity by <a href="https://github.com/LF-Decentralized-Trust-labs/paladin/blob/main/solidity/contracts/domains/noto/Noto.sol">Noto.sol</a>,
 and can be accessed by calling <code>ptx_sendTransaction</code> with <code>"type": "public"</code>. However, it is not often required
 to invoke the public ABI directly.</p>
 <h3 id="mint_1">mint<a class="headerlink" href="#mint_1" title="Permanent link">&para;</a></h3>
@@ -4107,9 +4107,9 @@ notary logic can be easily configured as described below.</p>
 </ul>
 <h3 id="notary-mode-hooks">Notary mode: hooks<a class="headerlink" href="#notary-mode-hooks" title="Permanent link">&para;</a></h3>
 <p>When a Noto contract is constructed with notary mode <code>hooks</code>, the address of a private Pente contract implementing
-<a href="../../../solidity/contracts/private/interfaces/INotoHooks.sol">INotoHooks</a> must be provided. This contract may be
-deployed into a privacy group only visible to the notary, or into a group that includes other parties for
-observability.</p>
+<a href="https://github.com/LF-Decentralized-Trust-labs/paladin/blob/main/solidity/contracts/domains/interfaces/INotoHooks.sol">INotoHooks</a>
+must be provided. This contract may be deployed into a privacy group only visible to the notary, or into a group
+that includes other parties for observability.</p>
 <p>The relevant hook will be invoked for each Noto operation, allowing the contract to determine if the operation is
 allowed, and to trigger any additional custom policies and side-effects. Hooks can even be used to track Noto token
 movements in an alternate manner, such as representing them as a private ERC-20 or other Ethereum token.</p>
