@@ -34,18 +34,27 @@ import (
 )
 
 func NewWSClient(ctx context.Context, conf *pldconf.WSClientConfig) (WSClient, error) {
+	return NewWSClientWithPreConnect(ctx, conf, nil)
+}
+
+func NewWSClientWithPreConnect(ctx context.Context, conf *pldconf.WSClientConfig, beforeConnect wsclient.WSPreConnectHandler) (WSClient, error) {
 	err := ValidateWSClientConfig(ctx, conf)
 	if err != nil {
 		return nil, err
 	}
 
-	return WrapWSConfig(conf), nil
+	return WrapWSConfigWithPreConnect(conf, beforeConnect), nil
 }
 
 func WrapWSConfig(conf *pldconf.WSClientConfig) WSClient {
+	return WrapWSConfigWithPreConnect(conf, nil)
+}
+
+func WrapWSConfigWithPreConnect(conf *pldconf.WSClientConfig, beforeConnect wsclient.WSPreConnectHandler) WSClient {
 	return &wsRPCClient{
 		wsConf:              *conf,
 		requestTimeout:      confutil.DurationMin(conf.WSRequestTimeout, 1*time.Second, *pldconf.DefaultWSConfig.WSRequestTimeout),
+		beforeConnect:       beforeConnect,
 		calls:               make(map[string]chan *RPCResponse),
 		configuredSubs:      make(map[uuid.UUID]*sub),
 		pendingSubsByReqID:  make(map[string]*sub),
@@ -101,6 +110,7 @@ type wsRPCClient struct {
 	mux                 sync.Mutex
 	wsConf              pldconf.WSClientConfig
 	requestTimeout      time.Duration
+	beforeConnect       wsclient.WSPreConnectHandler
 	client              wsclient.WSClient
 	requestCounter      int64
 	connected           chan struct{}
@@ -125,7 +135,7 @@ type sub struct {
 }
 
 func (rc *wsRPCClient) Connect(ctx context.Context) (err error) {
-	rc.client, err = wsclient.New(ctx, &rc.wsConf, nil, rc.handleReconnect)
+	rc.client, err = wsclient.New(ctx, &rc.wsConf, rc.beforeConnect, rc.handleReconnect)
 	if err != nil {
 		return err
 	}

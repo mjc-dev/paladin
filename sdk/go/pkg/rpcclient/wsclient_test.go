@@ -74,6 +74,36 @@ func TestWSRPCConnect(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestWSRPCBeforeConnect(t *testing.T) {
+	log.SetLevel("trace")
+
+	var beforeConnectCalls int
+	_, _, url, closeWS := wsclient.NewTestWSServer(func(req *http.Request) {
+		assert.Equal(t, "from-beforeConnect", req.Header.Get("X-Test-Auth"))
+	})
+	defer closeWS()
+
+	wsConfig := &pldconf.WSClientConfig{}
+	wsConfig.URL = url + "/test"
+	wsConfig.HeartbeatInterval = confutil.P("50ms")
+	wsConfig.InitialConnectAttempts = confutil.P(2)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	rc, err := NewWSClientWithPreConnect(ctx, wsConfig, func(ctx context.Context, w wsclient.WSClient) error {
+		beforeConnectCalls++
+		w.SetHeader("X-Test-Auth", "from-beforeConnect")
+		return nil
+	})
+	require.NoError(t, err)
+	defer rc.Close()
+
+	err = rc.Connect(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, beforeConnectCalls)
+}
+
 func TestWSRPCConfError(t *testing.T) {
 	// Init clean config
 	wsConfig := &pldconf.WSClientConfig{}
